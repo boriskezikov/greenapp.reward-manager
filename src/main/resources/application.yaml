@@ -4,8 +4,8 @@ spring:
   profiles:
     active:
 db:
-  host: ec2-79-125-26-232.eu-west-1.compute.amazonaws.com
+  host: ec2-54-75-246-118.eu-west-1.compute.amazonaws.com
   port: 5432
-  database: dcdiau51fbv8lp
-  username: rqesrgpikegrba
-  password: aef0a8af3cf50fd9e3afe9444f6a190126802b20e1d2771cd28413cfa7c34f5e
+  database: d1i8vbp3avpj99
+  username: ymzthsnuwgqdfi
+  password: 733301615685bdabaecce7ab8a2fe420d367df9e53b2d913941e3007fada9e86
