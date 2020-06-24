@@ -40,7 +40,7 @@ public class UpdateStatusOperation {
 
         public Query bindOn(Query query) {
             return query
-                .bind("$1", this.status)
+                .bind("$1", this.status.toString())
                 .bind("$2", this.clientId);
         }
     }

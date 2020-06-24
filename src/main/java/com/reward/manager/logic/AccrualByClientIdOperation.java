@@ -1,5 +1,7 @@
 package com.reward.manager.logic;
 
+import com.reward.manager.logic.GetAccountByIdOperation.GetAccountByClientIdRequest;
+import com.reward.manager.model.Account.Status;
 import com.reward.manager.model.Event;
 import com.reward.manager.service.dao.R2dbcAdapter;
 import com.reward.manager.service.dao.R2dbcHandler;
@@ -11,7 +13,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import static com.reward.manager.exception.ApplicationError.WRONG_STATUS;
 import static com.reward.manager.utils.Utils.logProcess;
+import static java.lang.String.format;
 
 @Component
 @RequiredArgsConstructor
@@ -25,9 +29,16 @@ public class AccrualByClientIdOperation {
     public Mono<Void> process(AccrualRequest request) {
         return request.asMono()
             .flatMap(r -> r2dbcHandler.inTxMono(h -> {
-                var updateTask = r2dbcAdapter.accrualAccount(h, r).cache();
+                var obtainStatus = r2dbcAdapter.findById(h, new GetAccountByClientIdRequest(request.clientId));
+                var updateTask = obtainStatus.flatMap(a -> {
+                    if (!a.status.equals(Status.ACTIVE)) {
+                        return WRONG_STATUS.exceptionMono(
+                            format("Account status is %s. Cannot accrual this account", a.status.toString()));
+                    }
+                    return r2dbcAdapter.accrualAccount(h, r).cache();
+                });
                 var insertEvent = updateTask
-                    .map(id -> new Event(request.clientId, request.amount, "AccuralAccout", request.initiator))
+                    .map(id -> new Event(id, request.amount, "AccuralAccout", request.initiator))
                     .flatMap(e -> r2dbcAdapter.insertEvent(h, e));
                 return Mono.when(updateTask, insertEvent);
             }))

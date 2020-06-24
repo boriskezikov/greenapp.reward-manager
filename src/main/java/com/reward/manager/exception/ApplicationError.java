@@ -5,7 +5,8 @@ import reactor.core.publisher.Mono;
 public enum ApplicationError {
 
     ACCOUNT_NOT_FOUND_BY_ID(400, "Account not found error"),
-    NOT_ENOUGH_MONEY(400, "Not enough money");
+    NOT_ENOUGH_MONEY(400, "Not enough money"),
+    WRONG_STATUS(400, "Account status is not 'ACTIVE'");
 
     public final int status;
     public final String description;

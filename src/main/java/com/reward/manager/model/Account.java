@@ -25,6 +25,7 @@ public class Account {
         return Account.builder()
             .userId(row.get("user_id", Long.class))
             .amount(row.get("amount", Long.class))
+            .status(Status.valueOf(row.get("status", String.class)))
             .updated(row.get("updated", LocalDateTime.class))
             .created(row.get("created", LocalDateTime.class))
             .build();

@@ -25,27 +25,27 @@ public class R2dbcAdapter {
         if (isNull(handle)) {
             return this.handler.withHandle(h -> findById(h, request));
         }
-        var sql = "SELECT user_id, amount, status, updated, created " +
+        var sql = "SELECT user_id, amount, CAST(status AS VARCHAR), updated, created " +
             "FROM public.account WHERE user_id = $1";
         return request.bindOn(handle.createQuery(sql))
             .mapRow(Account::fromGetByIdRow)
             .next();
     }
 
-    public Mono<Long> insertEvent(@Nullable Handle handle, Event request) {
+    public Mono<Integer> insertEvent(@Nullable Handle handle, Event request) {
         if (isNull(handle)) {
             return this.handler.withHandle(h -> insertEvent(h, request));
         }
-        var sql = "INSERT INTO public.account_event (account_id, value, name, type, initiator) " +
-            "VALUES($1, $2, $3, $4) RETURNING id";
+        var sql = "INSERT INTO public.event(account_id, value, name, initiator) " +
+            "VALUES($1, $2, $3, $4)";
         return request.bindOn(handle.createQuery(sql))
-            .mapRow(r -> r.get("id", Long.class))
+            .mapResult(r -> r.getRowsUpdated())
             .next();
     }
 
     public Mono<Long> updateStatus(UpdateStatusRequest request) {
         return handler.inTxMono(h -> {
-            var sql = "UPDATE public.account SET status = $1::account_status" +
+            var sql = "UPDATE public.account SET status = $1::account_status " +
                 "WHERE user_id = $2 RETURNING id";
             return request.bindOn(h.createQuery(sql))
                 .mapRow(r -> r.get("id", Long.class))
@@ -57,9 +57,10 @@ public class R2dbcAdapter {
         if (isNull(handle)) {
             return this.handler.withHandle(h -> accrualAccount(h, request));
         }
-        var sql = "INSERT INTO public.account (user_id, amount) VALUES($1, $2) ON CONFLICT " +
-            "DO UPDATE public.account SET amount = amount + $2, updated = now() " +
-            "WHERE user_id = $1 AND status = 'ACTIVE'::account_status RETURNING id";
+        var sql = "INSERT INTO public.account(user_id, amount) VALUES($1, $2) " +
+            "ON CONFLICT ON CONSTRAINT unique_user_id_constr " +
+            "DO UPDATE SET amount = account.amount + $2, updated = now() " +
+            "WHERE account.user_id = $1 AND account.status = 'ACTIVE'::account_status RETURNING id";
         return request.bindOn(handle.createQuery(sql))
             .mapRow(r -> r.get("id", Long.class))
             .next();
@@ -69,9 +70,10 @@ public class R2dbcAdapter {
         if (isNull(handle)) {
             return this.handler.withHandle(h -> writeoffAccount(h, request));
         }
-        var sql = "INSERT INTO public.account (user_id, amount) VALUES($1, $2) ON CONFLICT " +
-            "DO UPDATE public.account SET amount = amount - $2, updated = now() " +
-            "WHERE user_id = $1 AND status = 'ACTIVE'::account_status RETURNING id";
+        var sql = "INSERT INTO public.account(user_id) VALUES($1) " +
+            "ON CONFLICT ON CONSTRAINT unique_user_id_constr " +
+            "DO UPDATE SET amount = account.amount - $2, updated = now() " +
+            "WHERE account.user_id = $1 AND account.status = 'ACTIVE'::account_status RETURNING id";
         return request.bindOn(handle.createQuery(sql))
             .mapRow(r -> r.get("id", Long.class))
             .next();

@@ -34,8 +34,8 @@ public class RestController {
     private final WriteoffByClientIdOperation writeoffByClientIdOperation;
     private final UpdateStatusOperation updateStatusOperation;
 
-    @GetMapping("/account/{id}")
-    public Mono<Account> getAccountByClientId(@PathVariable(value = "id") Long taskId) {
+    @GetMapping(value = "/account", params = "clientId")
+    public Mono<Account> getAccountByClientId(@RequestParam(value = "clientId") Long taskId) {
         return Mono.just(new GetAccountByClientIdRequest(taskId))
             .flatMap(getAccountByIdOperation::process)
             .doOnSubscribe(s -> log.info("RestController.getAccountById.in id = {}", taskId))
@@ -58,7 +58,7 @@ public class RestController {
             .doOnSuccess(s -> log.info("RestController.writeoffByClientId.out"));
     }
 
-    @PatchMapping("/account/{id}")
+    @PatchMapping(value = "/account/{id}", params = "status")
     public Mono<Void> updateStatus(@PathVariable(value = "id") Long clientId, @RequestParam("status") Status status) {
         return Mono.just(new UpdateStatusRequest(clientId, status))
             .flatMap(updateStatusOperation::process)

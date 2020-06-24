@@ -1,6 +1,7 @@
 package com.reward.manager.logic;
 
 import com.reward.manager.logic.GetAccountByIdOperation.GetAccountByClientIdRequest;
+import com.reward.manager.model.Account.Status;
 import com.reward.manager.model.Event;
 import com.reward.manager.service.dao.R2dbcAdapter;
 import com.reward.manager.service.dao.R2dbcHandler;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import static com.reward.manager.exception.ApplicationError.NOT_ENOUGH_MONEY;
+import static com.reward.manager.exception.ApplicationError.WRONG_STATUS;
 import static com.reward.manager.utils.Utils.logProcess;
 import static java.lang.String.format;
 
@@ -32,11 +34,14 @@ public class WriteoffByClientIdOperation {
                 var updateTask = amount.flatMap(a -> {
                     if (a.amount < request.amount) {
                         return NOT_ENOUGH_MONEY.exceptionMono(format("Cannot write off %s. Not enough money", request.amount));
+                    } else if (!a.status.equals(Status.ACTIVE)) {
+                        return WRONG_STATUS.exceptionMono(
+                            format("Account status is %s. Cannot write off from this account", a.status.toString()));
                     }
                     return r2dbcAdapter.writeoffAccount(h, r);
                 });
                 var insertEvent = updateTask
-                    .map(id -> new Event(request.clientId, request.amount, "WriteoffAccout", request.initiator))
+                    .map(id -> new Event(id, request.amount, "WriteoffAccout", request.initiator))
                     .flatMap(e -> r2dbcAdapter.insertEvent(h, e));
                 return Mono.when(updateTask, insertEvent);
             }))
