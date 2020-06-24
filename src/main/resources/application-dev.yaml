@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: reward-manager
+server:
+  port: 9090
+db:
+  host: localhost
+  port: 54320
+  database: reward
+  username: postgres
+  password: admin

@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: reward-manager
+  profiles:
+    active: dev
+db:
+  host: ec2-79-125-26-232.eu-west-1.compute.amazonaws.com
+  port: 5432
+  database: dcdiau51fbv8lp
+  username: rqesrgpikegrba
+  password: aef0a8af3cf50fd9e3afe9444f6a190126802b20e1d2771cd28413cfa7c34f5e
