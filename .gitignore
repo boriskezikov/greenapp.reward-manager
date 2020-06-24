@@ -1,2 +1,4 @@
 /.idea/
 /reward-manager.iml
+/target/
+src/main/resources/application-dev.yaml
