@@ -35,8 +35,8 @@ public class AccrualByClientIdOperation {
                         return WRONG_STATUS.exceptionMono(
                             format("Account status is %s. Cannot accrual this account", a.status.toString()));
                     }
-                    return r2dbcAdapter.accrualAccount(h, r).cache();
-                });
+                    return r2dbcAdapter.accrualAccount(h, r);
+                }).switchIfEmpty(r2dbcAdapter.accrualAccount(h, r));
                 var insertEvent = updateTask
                     .map(id -> new Event(id, request.amount, "AccuralAccout", request.initiator))
                     .flatMap(e -> r2dbcAdapter.insertEvent(h, e));
